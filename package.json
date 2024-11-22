@@ -1,0 +1,28 @@
+{
+  "name": "afinn-based",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "csv-parser": "^3.0.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "fs": "^0.0.1-security",
+    "knex": "^3.1.0",
+    "morgan": "^1.10.0",
+    "mssql": "^11.0.1",
+    "mysql": "^2.18.1",
+    "natural": "^8.0.1",
+    "nodemon": "^3.1.7",
+    "sastrawijs": "^1.1.0",
+    "sentiment": "^5.0.2",
+    "stopword": "^3.1.1"
+  }
+}
