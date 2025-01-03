@@ -1,4 +1,6 @@
 const controller = require("../utils/naiveBayes.utils");
+const controllerTF = require("../utils/tensorFlow");
+const controllerTrain = require("../utils/tensorBasicTrain");
 
 module.exports = function (app) {
     app.use(function (req, res, next) {
@@ -26,7 +28,24 @@ module.exports = function (app) {
         // [authJwt.verifyToken],
         controller.showScore
     );
-    
 
-   
+    app.get(
+        "/skripsi/utils/trainDataSetNew",
+        // [authJwt.verifyToken],
+        controller.trainDataSetNew
+    );
+
+    app.post(
+        "/skripsi/utils/basicTF",
+        // [authJwt.verifyToken],
+        controllerTF.basicTF
+    );
+
+    app.post(
+        "/skripsi/utils/tryTensor",
+        // [authJwt.verifyToken],
+        controllerTrain.trainAndSaveModel
+    );
+    
+    
 }
