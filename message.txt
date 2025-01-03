@@ -1,0 +1,67 @@
+// Example confusion matrix and classes
+const classes = ['positive', 'negative', 'neutral'];
+const confusionMatrix = [
+  [1, 0, 1], // positive: TP, FP for negative, FP for neutral
+  [0, 2, 0], // negative: FN, TP, FN
+  [0, 0, 1], // neutral: FN, FN, TP
+];
+
+// Initialize metrics
+const metrics = classes.map(() => ({
+  TP: 0,
+  FP: 0,
+  FN: 0,
+  Precision: 0,
+  Recall: 0,
+  F1: 0,
+}));
+
+// Calculate metrics per class
+classes.forEach((cls, i) => {
+  let TP = confusionMatrix[i][i];
+  let FP = confusionMatrix.reduce((sum, row) => sum + row[i], 0) - TP; // Column sum minus TP
+  let FN = confusionMatrix[i].reduce((sum, val) => sum + val, 0) - TP; // Row sum minus TP
+
+  metrics[i].TP = TP;
+  metrics[i].FP = FP;
+  metrics[i].FN = FN;
+
+  // Precision, Recall, and F1-Score
+  let precision = TP / (TP + FP || 1); // Avoid division by zero
+  let recall = TP / (TP + FN || 1);
+  let f1 = 2 * (precision * recall) / (precision + recall || 1);
+
+  metrics[i].Precision = precision;
+  metrics[i].Recall = recall;
+  metrics[i].F1 = f1;
+});
+
+// Calculate accuracy
+const totalCorrect = confusionMatrix.reduce((sum, row, i) => sum + row[i], 0); // Diagonal sum
+const totalPredictions = confusionMatrix.reduce(
+  (sum, row) => sum + row.reduce((rowSum, val) => rowSum + val, 0),
+  0
+);
+const accuracy = totalCorrect / totalPredictions;
+
+// Print confusion matrix
+console.log('Confusion Matrix:');
+console.log('   ' + classes.join('    ')); // Header row
+confusionMatrix.forEach((row, i) => {
+  console.log(`${classes[i]}: ${row.join('    ')}`);
+});
+
+// Print metrics per class
+console.log('\nClass Metrics:');
+metrics.forEach((metric, i) => {
+  console.log(`Class "${classes[i]}":`);
+  console.log(`  TP: ${metric.TP}`);
+  console.log(`  FP: ${metric.FP}`);
+  console.log(`  FN: ${metric.FN}`);
+  console.log(`  Precision: ${metric.Precision.toFixed(4)}`);
+  console.log(`  Recall: ${metric.Recall.toFixed(4)}`);
+  console.log(`  F1-Score: ${metric.F1.toFixed(4)}`);
+});
+
+// Print overall accuracy
+console.log('\nOverall Accuracy:', accuracy.toFixed(4));

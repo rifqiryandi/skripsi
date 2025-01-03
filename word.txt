@@ -1,0 +1,71 @@
+3.5 Pengumpulan Data
+Metode pengumpulan data yang digunakan dalam penelitian ini adalah metode sekunder, yang melibatkan pengambilan data yang telah tersedia. Data ini biasanya dikumpulkan dan disediakan oleh pihak lain melalui repositori online, jurnal, atau organisasi. Dalam penelitian ini, data diperoleh dari dua sumber dataset yang tersedia di GitHub:
+
+Sumber Dataset Pertama
+Dataset pertama diperoleh dari repositori GitHub Dataset-Sentimen-Analisis-Bahasa-Indonesia. Dataset ini berisi data sentiment analysis yang terkait dengan layanan provider, yang terdiri dari 300 tweet. Data tersebut telah dikelompokkan menjadi dua kelas sentimen, yaitu positif dan negatif.
+https://github.com/rizalespe/Dataset-Sentimen-Analisis-Bahasa-Indonesia
+
+Sumber Dataset Kedua
+Dataset kedua diambil dari repositori GitHub Sentiment-Analysis-NLP-with-Python. Dataset ini berisi ulasan pengguna terkait aplikasi Shopee, dengan total 896 data. Data dalam dataset ini juga telah dikelompokkan menjadi dua kelas sentimen, yaitu positif dan negatif. Dataset ini dapat diakses melalui tautan berikut:
+https://github.com/yrtnsari/Sentiment-Analysis-NLP-with-Python/blob/main/dataset_shopee2.csv
+
+Sumber Dataset Ketiga
+Dataset ketiga diambil dari repositori GitHub dataset-idsa. Dataset ini berisikan tweet pengguna yang sudah di label dengan 1 sebagai positive, 0 sebagai neutral dan -1 sebagai negative.
+https://github.com/ridife/dataset-idsa/blob/master/Indonesian%20Sentiment%20Twitter%20Dataset%20Labeled.csv
+
+Proses pengumpulan data dilakukan dengan mengunduh dataset dari repositori GitHub. Data tersebut kemudian akan melalui tahap pre-processing untuk memastikan bahwa data siap digunakan dalam proses analisis.
+
+3.6 Perancangan Model
+Perancangan model dalam penelitian ini mencakup beberapa tahapan utama, yaitu pre-processing, penerapan algoritma Naïve Bayes, dan evaluasi model. Setiap tahap dirancang untuk memastikan bahwa model sentiment analysis yang dihasilkan memiliki performa yang optimal. Pada setiap tahapannya menggunakan semua fungsi yang tersedia pada natural js.
+
+3.6.1 Pre-Processing
+Tahap pre-processing bertujuan untuk mempersiapkan data agar siap digunakan dalam proses analisis. Proses ini melibatkan beberapa langkah, di antaranya: 
+Tokenisasi dan Cleansing Data 
+Memecah teks dan Menghapus elemen-elemen yang tidak relevan, seperti tanda baca, angka, URL, dan simbol yang tidak diperlukan yang menjadikan kata-kata atau token yang lebih kecil untuk diproses lebih lanjut.
+
+Stemming
+Mengubah kata-kata dalam dataset menjadi bentuk dasarnya menggunakan library seperti Sastrawi atau sastrawijs untuk Bahasa Indonesia.
+
+Stopword Removal
+Menghapus kata-kata umum yang tidak memiliki makna signifikan untuk analisis sentimen, seperti "dan", "yang", "atau".
+
+3.6.2 Penerapan Naïve Bayes
+Pada tahap ini, algoritma Naïve Bayes digunakan untuk melakukan analisis sentimen terhadap dataset yang telah diproses sebelumnya. Algoritma ini dipilih karena kesederhanaannya dan keakuratannya dalam klasifikasi teks, khususnya dalam analisis sentimen.
+Langkah-langkah penerapan Naïve Bayes meliputi:
+
+Training Model
+
+Dataset yang telah melalui proses pre-processing dibagi menjadi data latih dan data uji.
+Model Naïve Bayes dilatih menggunakan data latih untuk mempelajari pola dan distribusi kata yang terkait dengan kelas sentimen (positif atau negatif).
+Testing Model
+
+Model yang telah dilatih diuji dengan data uji untuk mengukur performanya.
+Hasil klasifikasi model dibandingkan dengan label asli untuk menghitung metrik evaluasi seperti akurasi, presisi, recall, dan F1-score.
+Penggunaan Natural.js
+Semua fungsi yang diperlukan untuk implementasi algoritma Naïve Bayes, seperti tokenisasi, perhitungan probabilitas, dan klasifikasi, menggunakan library Natural.js. Library ini dipilih karena kemudahan penggunaannya dalam pemrosesan bahasa alami.
+
+3.6.3 Evaluasi Model
+Evaluasi model bertujuan untuk menilai kinerja model yang telah dibangun. Dalam evaluasi model ini, digunakan metode k-fold cross-validation. Tahapan evaluasi model adalah sebagai berikut:
+
+Dataset Uji
+Dataset uji terdiri dari 150 data yang terbagi secara seimbang antara tiga kelas: 50 data positif, 50 data negatif, dan 50 data netral. Pembagian data yang seimbang ini penting untuk memastikan evaluasi model yang objektif dan menghindari bias terhadap satu kelas tertentu.
+
+Metrik Evaluasi dengan K-fold Cross-Validation
+Evaluasi model menggunakan metrik berikut untuk mengukur kinerja model secara lebih komprehensif:
+
+Akurasi: Mengukur persentase prediksi yang benar dari seluruh prediksi yang dilakukan oleh model. Ini memberikan gambaran umum tentang seberapa sering model menghasilkan prediksi yang benar.
+
+Presisi: Mengukur ketepatan model dalam memprediksi kelas tertentu (misalnya, sentimen positif). Presisi dihitung sebagai rasio antara jumlah prediksi positif yang benar dengan total prediksi positif yang dibuat.
+
+Recall: Mengukur sensitivitas model terhadap kelas tertentu. Recall menghitung seberapa banyak contoh dari kelas yang relevan berhasil ditemukan oleh model.
+
+F1-Score: Merupakan rata-rata harmonis antara presisi dan recall. Metrik ini memberikan gambaran menyeluruh tentang performa model, terutama ketika ada ketidakseimbangan antara presisi dan recall.
+
+Analisis Hasil
+Setelah evaluasi model dilakukan, langkah selanjutnya adalah melakukan analisis terhadap hasil prediksi untuk mengidentifikasi kekuatan dan kelemahan model. Analisis ini bertujuan untuk mengevaluasi apakah model sudah cukup baik dalam mengklasifikasikan sentimen yang ada. Berdasarkan analisis ini, saran-saran untuk perbaikan model dapat diberikan, seperti:
+
+Menambah jumlah data pelatihan untuk mengurangi overfitting atau meningkatkan generalisasi model.
+Memperbaiki proses pre-processing data, seperti tokenisasi, penghapusan kata yang tidak relevan, atau penerapan teknik lainnya untuk meningkatkan kualitas fitur yang digunakan oleh model.
+Mencoba algoritma lain atau melakukan tuning parameter untuk meningkatkan kinerja model jika diperlukan.
+
+
