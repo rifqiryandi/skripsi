@@ -37,9 +37,20 @@ function getMonthRange(start, end) {
     return result;
 }
 
+function getQuarter(month) {
+    if (month >= 1 && month <= 3) return 'Q1';
+    if (month >= 4 && month <= 6) return 'Q2';
+    if (month >= 7 && month <= 9) return 'Q3';
+    if (month >= 10 && month <= 12) return 'Q4';
+    return null; // Jika data tidak valid
+}
+
 
 async function npsDashboard(req, res) {
     let area = ((req.body.area == '') ? '' : req.body.area)
+    let kcu = ((req.body.kcu == '') ? '' : req.body.kcu)
+    let kc = ((req.body.kc == '') ? '' : req.body.kc)
+
     try {
         let paramsPs, paramsDT, paramsPM
         let {
@@ -49,17 +60,21 @@ async function npsDashboard(req, res) {
         } = req.body
         const range = getMonthRange(start, end);
         paramsPs = {
-            layanan : layanan,
+            layanan: layanan,
             area: area,
+            kcu : kcu,
+            kc : kc,
             poin_awal: 70,
             poin_akhir: 80,
             start: start,
             end: end
-        }        
+        }
         let dataPassive = await m_nps.npsDashboard(paramsPs)
         paramsDT = {
-            layanan : layanan,
+            layanan: layanan,
             area: area,
+            kcu : kcu,
+            kc : kc,
             poin_awal: 0,
             poin_akhir: 60,
             start: start,
@@ -67,14 +82,29 @@ async function npsDashboard(req, res) {
         }
         let dataDetractor = await m_nps.npsDashboard(paramsDT)
         paramsPM = {
-            layanan : layanan,
+            layanan: layanan,
             area: area,
+            kcu : kcu,
+            kc : kc,
             poin_awal: 90,
             poin_akhir: 100,
             start: start,
             end: end
         }
         let dataPromotor = await m_nps.npsDashboard(paramsPM)
+        let mergeAllDataAsArray = [].concat(dataPassive, dataDetractor, dataPromotor)
+
+        const grouped = {};
+
+        mergeAllDataAsArray.forEach((item) => {
+            const [month, year] = item.create_at.split('-').map(Number);
+            const quarter = getQuarter(month);
+
+            if (!grouped[quarter]) {
+                grouped[quarter] = 0;
+            }
+            grouped[quarter] += 1;
+        });
 
         let dataPassiveMonth = categorizeByMonth(dataPassive)
         let dataDetractorMonth = categorizeByMonth(dataDetractor)
@@ -96,7 +126,7 @@ async function npsDashboard(req, res) {
 
         }
         let persenNpsLastM = resultPerMonth[range[range.length - 1]]['npsScorePerMonth'] - resultPerMonth[range[range.length - 2]]['npsScorePerMonth']
-        
+
         let jumlahResponden = dataPassive.length + dataDetractor.length + dataPromotor.length
         let persenPro = dataPromotor.length / jumlahResponden * 100
         let persenDet = dataDetractor.length / jumlahResponden * 100
@@ -107,15 +137,16 @@ async function npsDashboard(req, res) {
             'jumlahDetractor': dataDetractor.length,
             'jumlahPromotor': dataPromotor.length,
             'npsScoreAll': npsScore.toFixed(2),
-            'LastMonth' : persenNpsLastM.toFixed(2),
+            'LastMonth': persenNpsLastM.toFixed(2),
             'ResultPerMonth': resultPerMonth
         }
         res.status(200).json({
             'responCode': 200,
             'Msg': 'Berhasil',
-            'Data': Data
+            'Data': Data,
+            'Responden': grouped
         })
-    } catch (error) {        
+    } catch (error) {
         return res.status(400).json({
             'responCode': 400,
             'Msg': 'Error Controller:' + error.message
