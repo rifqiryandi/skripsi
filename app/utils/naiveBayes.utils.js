@@ -45,48 +45,61 @@ exports.trainDataSet = async (req, res) => {
         let dataset = await readCSV('dataset2.csv')
 
         // Split into training and testing (e.g., 80% training, 20% testing)
+
         const trainSize = Math.floor(dataset.length * 0.8);
         const trainingData = dataset.slice(0, trainSize);
         const testingData = dataset.slice(trainSize);
 
-        
-        // let trainingData = [];
-        // let countP = 0,
-        //     countN = 0,
-        //     countNu = 0
-        // let maxPerCategory = 1000;
-        // for (let i = 0; i < dataset.length; i++) {
-        //     if (countP >= maxPerCategory && countN >= maxPerCategory && countNu >= maxPerCategory) {
-        //         break;
-        //     }
-        //     let item = dataset[i];
-        //     if (item.label === 'positive' && countP < maxPerCategory) {
-        //         countP++;
-        //         trainingData.push(item);
-        //     } else if (item.label === 'negative' && countN < maxPerCategory) {
-        //         countN++;
-        //         trainingData.push(item);
-        //     } else if (item.label !== 'positive' && item.label !== 'negative' && countNu < maxPerCategory) {
-        //         countNu++;
-        //         trainingData.push(item);
-        //     }
-        // }
-        // let p = 0,
-        //     n = 0,
-        //     nu = 0
-        // for (let z = 0; z < dataset.length; z++) {
-        //     const element = dataset[z];
-        //     if (element.label == 'positive') {
-        //         p++
-        //     } else if (element.label == 'negative') {
-        //         n++
-        //     } else {
-        //         nu++
-        //     }
-        // }
-        // console.log(p, n, nu);
+        // dataset training 
+        let trainingDataNew = [];
+        let countP = 0,
+            countN = 0,
+            countNu = 0
+        let maxPerCategory = 200;
+        for (let i = 0; i < dataset.length; i++) {
+            if (countP >= maxPerCategory && countN >= maxPerCategory && countNu >= maxPerCategory) {
+                break;
+            }
+            let item = dataset[i];
+            if (item.label === 'positive' && countP < maxPerCategory) {
+                countP++;
+                trainingDataNew.push(item);
+            } else if (item.label === 'negative' && countN < maxPerCategory) {
+                countN++;
+                trainingDataNew.push(item);
+            } else if (item.label !== 'positive' && item.label !== 'negative' && countNu < maxPerCategory) {
+                countNu++;
+                trainingDataNew.push(item);
+            }
+        }
 
-        trainingData.forEach(item => {
+        // dataset testing 
+        let testingDataNew = [];
+        countP = 0
+        countN = 0
+        countNu = 0
+        maxPerCategory = 50;
+
+        for (let z = dataset.length - 1; z >= 0; z--) {
+
+            if (countP >= maxPerCategory && countN >= maxPerCategory && countNu >= maxPerCategory) {
+                break;
+            }
+            let item = dataset[z];
+
+            if (item.label === 'positive' && countP < maxPerCategory) {
+                countP++;
+                testingDataNew.push(item);
+            } else if (item.label === 'negative' && countN < maxPerCategory) {
+                countN++;
+                testingDataNew.push(item);
+            } else if (item.label !== 'positive' && item.label !== 'negative' && countNu < maxPerCategory) {
+                countNu++;
+                testingDataNew.push(item);
+            }
+        }
+
+        trainingDataNew.forEach(item => {
             // Tokenisasi (memecah kalimat menjadi kata-kata)
             let tokenizedText = tokenizer.tokenize(item.text);
 
@@ -94,11 +107,11 @@ exports.trainDataSet = async (req, res) => {
             let filteredText = stopword.removeStopwords(tokenizedText, indonesianStopwords);
 
             // Stemming (mengubah kata-kata menjadi bentuk dasar)
-            let stemmedText = filteredText.map(word => stemmer.stem(word));
+            // let stemmedText = filteredText.map(word => stemmer.stem(word));
 
             // Tambahkan dokumen ke classifier dengan teks yang telah diproses dan label
-            classifier.addDocument(stemmedText.join(' '), item.label);
-            // classifier.addDocument(item.text, item.label);
+            classifier.addDocument(filteredText.join(' '), item.label);
+            classifier.addDocument(item.text, item.label);
 
         });
 
@@ -108,13 +121,14 @@ exports.trainDataSet = async (req, res) => {
         // Predict and compare on testing data
         const trueLabels = [];
         const predictedLabels = [];
-        testingData.forEach((data) => {
+        testingDataNew.forEach((data) => {
             trueLabels.push(data.label);
             predictedLabels.push(classifier.classify(data.text));
         });
 
+
         // Calculate the confusion matrix
-        calculateConfusionMatrix(trueLabels, predictedLabels);
+        let numMatrix = calculateConfusionMatrix(trueLabels, predictedLabels);
 
         // Simpan classifier untuk digunakan nanti
         classifier.save('classifier-id.json', function (err, classifier) {
@@ -128,11 +142,12 @@ exports.trainDataSet = async (req, res) => {
         return res.status(200).json({
             'server': process.env.SERVER_TYPE,
             'code': 200,
-            'message': 'train data success'
+            'message': 'train data success',
+            "Score": numMatrix
         })
     } catch (error) {
-        console.log(error.message);
-        
+        console.log(error);
+
         res.status(404).json({
             'server': process.env.SERVER_TYPE,
             'code': 404,
@@ -155,15 +170,55 @@ function calculateConfusionMatrix(trueLabels, predictedLabels) {
     });
 
     // Print confusion matrix
-    console.log('Classes:', classes);
-    console.log('Confusion Matrix:');
-    console.log('   ' + classes.join('    ')); // Header row
     confusionMatrix.forEach((row, i) => {
         console.log(`${classes[i]}` + ':' + `${row.join('    ')}`);
     });
 
     // Optionally, compute metrics like accuracy, precision, recall, F1-score
-    computeMetrics(confusionMatrix, classes);
+    let totalCorrect = 0;
+    let totalPredictions = 0;
+    const metrics = classes.map(() => ({
+        TP: 0,
+        FP: 0,
+        FN: 0,
+        Precision: 0,
+        Recall: 0,
+        F1: 0,
+    }));
+
+    confusionMatrix.forEach((row, i) => {
+        totalCorrect += row[i]; // Diagonal
+        totalPredictions += row.reduce((sum, val) => sum + val, 0);
+
+        const TP = row[i];
+        const FP = confusionMatrix.reduce((sum, r) => sum + r[i], 0) - TP;
+        const FN = row.reduce((sum, val) => sum + val, 0) - TP;
+
+        metrics[i].TP = TP;
+        metrics[i].FP = FP;
+        metrics[i].FN = FN;
+        metrics[i].Precision = TP / (TP + FP || 1);
+        metrics[i].Recall = TP / (TP + FN || 1);
+        metrics[i].F1 =
+            2 * (metrics[i].Precision * metrics[i].Recall) /
+            (metrics[i].Precision + metrics[i].Recall || 1);
+    });
+
+    let respon = []
+    let overall = {
+        'OverallAccuracy': (totalCorrect / totalPredictions).toFixed(2)
+    }
+    respon.push(overall)
+    metrics.forEach((metric, i) => {
+        let objMetric = {
+            "Class ": classes[i],
+            "Precision": metric.Precision.toFixed(2),
+            "Recall": metric.Recall.toFixed(2),
+            "F1-Score": metric.F1.toFixed(2)
+        }
+        respon.push(objMetric)
+    });
+    return respon
 }
 
 function computeMetrics(confusionMatrix, classes) {
@@ -196,16 +251,14 @@ function computeMetrics(confusionMatrix, classes) {
             (metrics[i].Precision + metrics[i].Recall || 1);
     });
 
-    console.log('\nOverall Accuracy:', (totalCorrect / totalPredictions).toFixed(2) , '%');
+    console.log('\nOverall Accuracy:', (totalCorrect / totalPredictions).toFixed(2), '%\n');
     metrics.forEach((metric, i) => {
-        console.log("Class " +`${classes[i]}`+':');
-        console.log("Precision:"+ `${metric.Precision.toFixed(2)}`+'%');
-        console.log("Recall:" + `${metric.Recall.toFixed(2)}`+'%');
-        console.log("F1 - Score:" + `${metric.F1.toFixed(2)}`+'%');
+        console.log("Class " + `${classes[i]}` + ':\n');
+        console.log("Precision:" + `${metric.Precision.toFixed(2)}` + '%');
+        console.log("Recall:" + `${metric.Recall.toFixed(2)}` + '%');
+        console.log("F1 - Score:" + `${metric.F1.toFixed(2)}` + '%\n');
     });
 }
-
-
 
 
 function loadClassifier(filePath) {
@@ -242,6 +295,43 @@ exports.sentimentAnalyst = async (req, res) => {
         })
     }
 }
+
+let classifierModel;
+(async () => {
+    try {
+        classifierModel = await new Promise((resolve, reject) => {
+            natural.BayesClassifier.load('classifier-id.json', null, function (err, classifier) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(classifier);
+                }
+            });
+        });
+        console.log('Classifier model loaded successfully.');
+    } catch (error) {
+        console.error('Error loading classifier model:', error.message);
+    }
+})();
+
+exports.predictSentiment = async (komentar) => {
+    if (!classifierModel) {
+        return res.status(500).json({
+            'server': process.env.SERVER_TYPE,
+            'code': 500,
+            'message': 'Classifier model not loaded.'
+        });
+    }
+    try {
+        let tokenizedKomentar = tokenizer.tokenize(komentar);
+        let filteredKomentar = stopword.removeStopwords(tokenizedKomentar, indonesianStopwords);
+        // let stemmedKomentar = filteredKomentar.map(word => stemmer.stem(word));
+        const sentiment = classifierModel.classify(filteredKomentar.join(' '));
+        return sentiment;
+    } catch (error) {
+        console.log(error.message);
+    }
+};
 
 exports.showScore = async (req, res) => {
     const trainedModel = JSON.parse(fs.readFileSync('classifier-id.json', 'utf8'));
@@ -996,7 +1086,6 @@ exports.trainDataSetNew = async (req, res) => {
         //     // bestAccuracy: bestResult.accuracy,
         // });
     } catch (error) {
-        console.log(error);
 
         res.status(404).json({
             server: process.env.SERVER_TYPE,
@@ -1028,7 +1117,7 @@ function mapSentiment(value) {
 }
 exports.mergeDataset = (req, res) => {
     const inputFile = './Indonesian Sentiment Twitter Dataset Labeled.csv';
-    const outputFile = './formatted_dataset.csv';
+    const outputFile = './netural_dataset.csv';
 
     const formattedData = [];
     let idCounter = 1;
@@ -1038,11 +1127,15 @@ exports.mergeDataset = (req, res) => {
         .on('data', (row) => {
             try {
                 let dataRow = row['sentimen\tTweet'].split('\t')
-                formattedData.push({
-                    Id: idCounter++,
-                    Sentiment: mapSentiment(dataRow[0]),
-                    Text: dataRow[1],
-                });
+
+                if (dataRow[0] == 0) {
+                    formattedData.push({
+                        Id: idCounter++,
+                        Sentiment: mapSentiment(dataRow[0]),
+                        Text: dataRow[1],
+                    });
+                }
+
             } catch (err) {
                 console.error('Error processing row:', row, err);
             }

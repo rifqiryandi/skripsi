@@ -22,6 +22,9 @@ app.get("/", (req, res) => {
 });
 require('./app/routes/transaction.routes')(app);
 require('./app/routes/nps.routes')(app);
+require('./app/routes/sentimentReport.routes')(app);
+require('./app/routes/kantor.routes')(app);
+
 
 
 // set port, listen for requests
