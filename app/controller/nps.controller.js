@@ -62,8 +62,8 @@ async function npsDashboard(req, res) {
         paramsPs = {
             layanan: layanan,
             area: area,
-            kcu : kcu,
-            kc : kc,
+            kcu: kcu,
+            kc: kc,
             poin_awal: 70,
             poin_akhir: 80,
             start: start,
@@ -73,8 +73,8 @@ async function npsDashboard(req, res) {
         paramsDT = {
             layanan: layanan,
             area: area,
-            kcu : kcu,
-            kc : kc,
+            kcu: kcu,
+            kc: kc,
             poin_awal: 0,
             poin_akhir: 60,
             start: start,
@@ -84,8 +84,8 @@ async function npsDashboard(req, res) {
         paramsPM = {
             layanan: layanan,
             area: area,
-            kcu : kcu,
-            kc : kc,
+            kcu: kcu,
+            kc: kc,
             poin_awal: 90,
             poin_akhir: 100,
             start: start,
@@ -95,8 +95,9 @@ async function npsDashboard(req, res) {
         let mergeAllDataAsArray = [].concat(dataPassive, dataDetractor, dataPromotor)
 
         const grouped = {};
-
+        let persenQuartal = 0;
         mergeAllDataAsArray.forEach((item) => {
+
             const [month, year] = item.create_at.split('-').map(Number);
             const quarter = getQuarter(month);
 
@@ -105,27 +106,53 @@ async function npsDashboard(req, res) {
             }
             grouped[quarter] += 1;
         });
+        if (Object.keys(grouped).length > 1) {
+            let quartal = Object.keys(grouped)
+            persenQuartal = (((grouped[quartal[quartal.length - 1]] - grouped[quartal[quartal.length - 2]]) / grouped[quartal[quartal.length - 2]]) * 100).toFixed(2)
+        }
+
 
         let dataPassiveMonth = categorizeByMonth(dataPassive)
         let dataDetractorMonth = categorizeByMonth(dataDetractor)
         let dataPromotorMonth = categorizeByMonth(dataPromotor)
 
         let resultPerMonth = {}
-        for (let i = 0; i < range.length; i++) {
-            let month = range[i]
+        let persenNpsLastM
+        if (range.length != 1) {
+            for (let i = 0; i < range.length; i++) {
+                let month = range[i]
+                let jumlahRespondenPerMonth = dataPassiveMonth[month].length + dataDetractorMonth[month].length + dataPromotorMonth[month].length
+                let persenProPerMonth = dataPassiveMonth[month].length / jumlahRespondenPerMonth * 100
+                let persenDetPerMonth = dataDetractorMonth[month].length / jumlahRespondenPerMonth * 100
+
+                let npsScorePerMonth = persenProPerMonth - persenDetPerMonth
+
+                resultPerMonth[month] = {
+                    'jumlahPassive': dataPassiveMonth[month].length,
+                    'jumlahDetractor': dataDetractorMonth[month].length,
+                    'jumlahPromotor': dataPromotorMonth[month].length,
+                    'npsScorePerMonth': npsScorePerMonth.toFixed(2)
+                }
+
+            }
+            persenNpsLastM = resultPerMonth[range[range.length - 1]]['npsScorePerMonth'] - resultPerMonth[range[range.length - 2]]['npsScorePerMonth']
+
+        } else {
+            let month = range[0]
             let jumlahRespondenPerMonth = dataPassiveMonth[month].length + dataDetractorMonth[month].length + dataPromotorMonth[month].length
             let persenProPerMonth = dataPassiveMonth[month].length / jumlahRespondenPerMonth * 100
             let persenDetPerMonth = dataDetractorMonth[month].length / jumlahRespondenPerMonth * 100
+
             let npsScorePerMonth = persenProPerMonth - persenDetPerMonth
-            resultPerMonth[month] = {
-                'jumlahPassive': dataPassiveMonth[month].length,
-                'jumlahDetractor': dataDetractorMonth[month].length,
-                'jumlahPromotor': dataPromotorMonth[month].length,
+            resultPerMonth[range[0]] = {
+                'jumlahPassive': dataPassive.length,
+                'jumlahDetractor': dataDetractor.length,
+                'jumlahPromotor': dataPromotor.length,
                 'npsScorePerMonth': npsScorePerMonth.toFixed(2)
             }
-
+            persenNpsLastM = 0
         }
-        let persenNpsLastM = resultPerMonth[range[range.length - 1]]['npsScorePerMonth'] - resultPerMonth[range[range.length - 2]]['npsScorePerMonth']
+
 
         let jumlahResponden = dataPassive.length + dataDetractor.length + dataPromotor.length
         let persenPro = dataPromotor.length / jumlahResponden * 100
@@ -144,7 +171,8 @@ async function npsDashboard(req, res) {
             'responCode': 200,
             'Msg': 'Berhasil',
             'Data': Data,
-            'Responden': grouped
+            'Responden': grouped,
+            'PersenQuartal': persenQuartal
         })
     } catch (error) {
         return res.status(400).json({
