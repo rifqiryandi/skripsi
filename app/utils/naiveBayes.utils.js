@@ -308,7 +308,7 @@ let classifierModel;
                 }
             });
         });
-        console.log('Classifier model loaded successfully.');
+        // console.log('Classifier model loaded successfully.');
     } catch (error) {
         console.error('Error loading classifier model:', error.message);
     }
